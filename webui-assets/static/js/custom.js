@@ -1,3 +1,40 @@
+ if (window.Worker) {
+        var myWorker = new Worker("assets/worker.js");
+        var authToken = this.getToken('ec-config');
+        let user = atob(authToken.split('.')[1]).split('.')[0]
+        console.log(user);
+        let userApi = "https://ec-oauth-sso.run.aws-usw02-dev.ice.predix.io/users/" + user
+        var message = { api: "/v1.2beta/ops/api/snapshot", authToken: authToken };
+        myWorker.postMessage(message);
+        myWorker.onmessage = function (e) {
+         sessionStorage.setItem("snapshotData", JSON.stringify(e.data.result))
+        };
+      var newWorker = new Worker("assets/user-worker.js");
+      var userMessage = { userApi: userApi, authToken: authToken };
+      newWorker.postMessage(userMessage);
+      newWorker.onmessage = function (e) {
+         sessionStorage.setItem("userRole", e.data.user)
+        };
+      }
+       
+       function getToken(name){
+        var cookieName = name+"=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+              c = c.substring(1);
+            }
+            if (c.indexOf(cookieName) == 0) {
+              return c.substring(cookieName.length, c.length);
+            }
+      }
+
+    }
+
+
+
 $( document ).ready(function() {
     $('[data-toggle="tooltip"]').tooltip(); // For tooltips
     $.fn.extend({
@@ -62,6 +99,8 @@ $( document ).ready(function() {
     window.onkeypress = ResetTimeOutTimer;
     // Auto logout end
 });
+
+
 
 function loadTree(id){
     $('#'+id).treed();
